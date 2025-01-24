@@ -8,7 +8,6 @@ import todos from "./data/todos";
 
     <div class="todoapp__content">
       <header class="todoapp__header">
-        <!-- this button should have `active` class only if all todos are completed -->
         <button class="todoapp__toggle-all active"></button>
 
         <form>
@@ -22,6 +21,7 @@ import todos from "./data/todos";
       <section class="todoapp__main">
         <div
           v-for="todo of todos"
+          :key="todo.id"
           class="todo"
           :class="{ completed: todo.completed }"
         >
@@ -33,7 +33,6 @@ import todos from "./data/todos";
             />
           </label>
 
-          <!--  show when todo is being edited -->
           <form v-if="false">
             <input
               class="todo__title-field"
@@ -46,7 +45,6 @@ import todos from "./data/todos";
             <button class="todo__remove">×</button>
           </template>
 
-          <!-- add `is-active` class when todo being processed -->
           <div class="modal overlay" :class="{ 'is-active': false }">
             <div class="modal-background has-background-white-ter"></div>
             <div class="loader"></div>
@@ -54,26 +52,21 @@ import todos from "./data/todos";
         </div>
       </section>
 
-      <!-- Hide the footer if there are no todos -->
       <footer class="todoapp__footer">
-        <!-- show the number of not caompleted todos -->
         <span class="todo-count">3 items left</span>
 
-        <!-- Active link should have the 'selected' class -->
         <nav class="filter">
           <a href="#/" class="filter__link selected">All</a>
           <a href="#/active" class="filter__link">Active</a>
           <a href="#/completed" class="filter__link">Completed</a>
         </nav>
 
-        <!-- this button should be disabled if there are no completed todos -->
         <button class="todoapp__clear-completed">Clear completed</button>
       </footer>
     </div>
 
     <div class="notification is-danger is-light has-text-weight-normal hidden">
       <button class="delete"></button>
-      <!-- show only one message at a time -->
       Unable to load todos<br />
       Title should not be empty<br />
       Unable to add a todo<br />
