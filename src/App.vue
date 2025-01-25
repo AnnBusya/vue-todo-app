@@ -1,5 +1,28 @@
 <script setup>
-import todos from "./data/todos";
+import { ref } from 'vue';
+  import originalTodos from './data/todos';
+
+const todos = ref(originalTodos);
+
+const title = ref("");
+
+function addTodo() {
+  if (!title.value) {
+    errorMessage.value = "Title should not be empty";
+
+    return;
+  };
+
+    todos.value.push({
+      id: Date.now(),
+      title: title.value,
+      completed: false,
+    });
+
+    title.value = "";
+}
+
+  const errorMessage = ref("");
 </script>
 
 <template>
@@ -10,17 +33,18 @@ import todos from "./data/todos";
       <header class="todoapp__header">
         <button class="todoapp__toggle-all active"></button>
 
-        <form>
+        <form @submit.prevent="addTodo">
           <input
             class="todoapp__new-todo"
             placeholder="What needs to be done?"
+            v-model="title"
           />
         </form>
       </header>
 
       <section class="todoapp__main">
         <div
-          v-for="todo of todos"
+          v-for="(todo, i) of todos"
           :key="todo.id"
           class="todo"
           :class="{ completed: todo.completed }"
@@ -29,7 +53,7 @@ import todos from "./data/todos";
             <input
               type="checkbox"
               class="todo__status"
-              :checked="todo.completed"
+              v-model="todo.completed"
             />
           </label>
 
@@ -42,7 +66,7 @@ import todos from "./data/todos";
 
           <template v-else>
             <span class="todo__title">{{ todo.title }}</span>
-            <button class="todo__remove">×</button>
+            <button class="todo__remove" @click="todos.splice(i, 1)">×</button>
           </template>
 
           <div class="modal overlay" :class="{ 'is-active': false }">
@@ -65,8 +89,14 @@ import todos from "./data/todos";
       </footer>
     </div>
 
-    <div class="notification is-danger is-light has-text-weight-normal hidden">
-      <button class="delete"></button>
+    <div
+      v-if="errorMessage" 
+      class="notification is-danger is-light has-text-weight-normal hidden"
+    >
+      <button 
+        class="delete"
+        @click="errorMessage = ''"
+        ></button>
       Unable to load todos<br />
       Title should not be empty<br />
       Unable to add a todo<br />
