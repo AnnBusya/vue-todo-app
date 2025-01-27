@@ -5,7 +5,7 @@ const USER_ID = 687;
 
 export const getTodos = async () => {
   const response = await client.get(`/todos?userId=${USER_ID}`);
-
+  
   return response.data;
 };
 
