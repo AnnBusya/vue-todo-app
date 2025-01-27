@@ -1,8 +1,29 @@
 <script setup>
-import { ref } from 'vue';
-  import originalTodos from './data/todos';
+import { computed, ref, watch, onBeforeMount } from "vue";
+import StatusFilter from "./components/StatusFilter.vue";
 
-const todos = ref(originalTodos);
+const todos = ref([]);
+
+onBeforeMount(() => {
+  try {
+    todos.value = JSON.parse(localStorage.getItem('todos'));
+  } catch (error) {}
+
+  if (!Array.isArray(todos.value)) {
+    todos.value = [];
+  }
+});
+
+watch(
+  todos,
+  (newTodos) => {
+    localStorage.setItem("todos", JSON.stringify(newTodos));
+  },
+  { deep: true }
+);
+const activeTodos = computed(() =>
+  todos.value.filter((todo) => !todo.completed)
+);
 
 const title = ref("");
 
@@ -11,18 +32,31 @@ function addTodo() {
     errorMessage.value = "Title should not be empty";
 
     return;
-  };
+  }
 
-    todos.value.push({
-      id: Date.now(),
-      title: title.value,
-      completed: false,
-    });
+  todos.value.push({
+    id: Date.now(),
+    title: title.value,
+    completed: false,
+  });
 
-    title.value = "";
+  title.value = "";
 }
 
-  const errorMessage = ref("");
+const errorMessage = ref("");
+const status = ref("all");
+
+const visibleTodos = computed(() => {
+  if (status.value === "active") {
+    return activeTodos.value;
+  }
+
+  if (status.value === "completed") {
+    return todos.value.filter((todo) => todo.completed);
+  }
+
+  return todos.value;
+});
 </script>
 
 <template>
@@ -31,7 +65,11 @@ function addTodo() {
 
     <div class="todoapp__content">
       <header class="todoapp__header">
-        <button class="todoapp__toggle-all active"></button>
+        <button
+          v-if="todos.length > 0"
+          class="todoapp__toggle-all"
+          :class="{ active: activeTodos.length === 0 }"
+        ></button>
 
         <form @submit.prevent="addTodo">
           <input
@@ -42,9 +80,9 @@ function addTodo() {
         </form>
       </header>
 
-      <section class="todoapp__main">
+      <section class="todoapp__main" v-if="todos.length > 0">
         <div
-          v-for="(todo, i) of todos"
+          v-for="(todo, i) of visibleTodos"
           :key="todo.id"
           class="todo"
           :class="{ completed: todo.completed }"
@@ -76,27 +114,26 @@ function addTodo() {
         </div>
       </section>
 
-      <footer class="todoapp__footer">
-        <span class="todo-count">3 items left</span>
+      <footer class="todoapp__footer" v-if="todos.length > 0">
+        <span class="todo-count">{{ activeTodos.length }} items left</span>
 
-        <nav class="filter">
-          <a href="#/" class="filter__link selected">All</a>
-          <a href="#/active" class="filter__link">Active</a>
-          <a href="#/completed" class="filter__link">Completed</a>
-        </nav>
+        <StatusFilter v-model="status" />
 
-        <button class="todoapp__clear-completed">Clear completed</button>
+        <button
+          class="todoapp__clear-completed"
+          :disabled="todos.length === activeTodos.length"
+          @click="todos = activeTodos"
+        >
+          Clear completed
+        </button>
       </footer>
     </div>
 
     <div
-      v-if="errorMessage" 
+      v-if="errorMessage"
       class="notification is-danger is-light has-text-weight-normal hidden"
     >
-      <button 
-        class="delete"
-        @click="errorMessage = ''"
-        ></button>
+      <button class="delete" @click="errorMessage = ''"></button>
       Unable to load todos<br />
       Title should not be empty<br />
       Unable to add a todo<br />
