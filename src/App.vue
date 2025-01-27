@@ -1,12 +1,12 @@
 <script setup>
 import { computed, ref, watch, onBeforeMount } from "vue";
 import StatusFilter from "./components/StatusFilter.vue";
-
+import TodoItem from "./components/TodoItem.vue";
 const todos = ref([]);
 
 onBeforeMount(() => {
   try {
-    todos.value = JSON.parse(localStorage.getItem('todos'));
+    todos.value = JSON.parse(localStorage.getItem("todos"));
   } catch (error) {}
 
   if (!Array.isArray(todos.value)) {
@@ -80,39 +80,13 @@ const visibleTodos = computed(() => {
         </form>
       </header>
 
-      <section class="todoapp__main" v-if="todos.length > 0">
-        <div
-          v-for="(todo, i) of visibleTodos"
-          :key="todo.id"
-          class="todo"
-          :class="{ completed: todo.completed }"
-        >
-          <label class="todo__status-label">
-            <input
-              type="checkbox"
-              class="todo__status"
-              v-model="todo.completed"
-            />
-          </label>
-
-          <form v-if="false">
-            <input
-              class="todo__title-field"
-              placeholder="Empty todo will be deleted"
-            />
-          </form>
-
-          <template v-else>
-            <span class="todo__title">{{ todo.title }}</span>
-            <button class="todo__remove" @click="todos.splice(i, 1)">×</button>
-          </template>
-
-          <div class="modal overlay" :class="{ 'is-active': false }">
-            <div class="modal-background has-background-white-ter"></div>
-            <div class="loader"></div>
-          </div>
-        </div>
-      </section>
+      <TodoItem
+        v-for="todo of visibleTodos"
+        :key="todo.id"
+        :todo="todo"
+        @delete="todos.splice(todos.indexOf(todo), 1)"
+        @update="Object.assign(todo, $event)"
+        />
 
       <footer class="todoapp__footer" v-if="todos.length > 0">
         <span class="todo-count">{{ activeTodos.length }} items left</span>
