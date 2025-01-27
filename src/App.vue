@@ -1,47 +1,28 @@
 <script setup>
-import { computed, ref, watch, onBeforeMount, TransitionGroup } from "vue";
+import { computed, ref, onMounted, TransitionGroup } from "vue";
 import StatusFilter from "./components/StatusFilter.vue";
 import TodoItem from "./components/TodoItem.vue";
+import * as todoApi from "./api/todos";
 const todos = ref([]);
 
-onBeforeMount(() => {
-  try {
-    todos.value = JSON.parse(localStorage.getItem("todos"));
-  } catch (error) {}
-
-  if (!Array.isArray(todos.value)) {
-    todos.value = [];
-  }
+onMounted(async () => {
+  todos.value = await todoApi.getTodos();
 });
 
-watch(
-  todos,
-  (newTodos) => {
-    localStorage.setItem("todos", JSON.stringify(newTodos));
-  },
-  { deep: true }
-);
 const activeTodos = computed(() =>
   todos.value.filter((todo) => !todo.completed)
 );
 
 const title = ref("");
 
-function addTodo() {
-  if (!title.value) {
-    errorMessage.value = "Title should not be empty";
+const addTodo = async () => {
+  if (!title.value) return;
 
-    return;
-  }
+  const newTodo = await todoApi.createTodo(title.value);
 
-  todos.value.push({
-    id: Date.now(),
-    title: title.value,
-    completed: false,
-  });
-
+  todos.value.push(newTodo);
   title.value = "";
-}
+};
 
 const errorMessage = ref("");
 const status = ref("all");
@@ -57,6 +38,16 @@ const visibleTodos = computed(() => {
 
   return todos.value;
 });
+
+const updateTodo = async ({ id, title, completed }) => {
+  const updatedTodo = await todoApi.updateTodo({ id, title, completed });
+  const currentTodo = todos.value.find((todo) => todo.id === id);
+  Object.assign(currentTodo, updatedTodo);
+};
+const deleteTodo = async (todoId) => {
+  await todoApi.deleteTodo(todoId);
+  todos.value = todos.value.filter((todo) => todoId !== todo.id)
+};
 </script>
 
 <template>
@@ -90,8 +81,8 @@ const visibleTodos = computed(() => {
           v-for="todo of visibleTodos"
           :key="todo.id"
           :todo="todo"
-          @delete="todos.splice(todos.indexOf(todo), 1)"
-          @update="Object.assign(todo, $event)"
+          @delete="deleteTodo(todo.id)"
+          @update="updateTodo($event)"
         />
       </TransitionGroup>
 
